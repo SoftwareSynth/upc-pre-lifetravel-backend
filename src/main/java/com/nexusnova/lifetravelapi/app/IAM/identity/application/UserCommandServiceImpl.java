@@ -27,6 +27,10 @@ public class UserCommandServiceImpl implements UserCommandService {
     public User handle(RegisterUserTouristCommand registerUserCommand) {
         User user = new User();
         Role role = validationUtil.getTouristRole();
+        if (registerUserCommand.userRequestDto().getId() == null) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+
 
         return getUser(user, role, registerUserCommand.userRequestDto());
     }
