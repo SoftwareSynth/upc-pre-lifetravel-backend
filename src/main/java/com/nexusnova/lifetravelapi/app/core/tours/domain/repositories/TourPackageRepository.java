@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
@@ -16,4 +17,6 @@ public interface TourPackageRepository extends JpaRepository<TourPackage, Long> 
     List<TourPackage> findAllByVisibleIsTrue();
     List<TourPackage> findByAgencyId(Long agencyId);
     List<TourPackage> findByAgencyIdAndVisible(Long agencyId, boolean visible);
+
+    List<TourPackage> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
 }

@@ -2,15 +2,13 @@ package com.nexusnova.lifetravelapi.app.core.tours.application;
 
 import com.nexusnova.lifetravelapi.app.IAM.profile.domain.repositories.AgencyRepository;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.model.TourPackage;
-import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackageByIdQuery;
-import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByAgencyIdAndVisibilityQuery;
-import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByAgencyUserIdQuery;
-import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByRegionQuery;
+import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.*;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.repositories.TourPackageRepository;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.services.TourPackageQueryService;
 import com.nexusnova.lifetravelapi.configuration.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -44,6 +42,19 @@ public class TourPackageQueryServiceImpl implements TourPackageQueryService {
                 .getId();
         return tourPackageRepository.findByAgencyIdAndVisible(agencyId, query.visible());
     }
+
+    @Override
+    public List<TourPackage> handle(GetTourPackagesByPriceQuery query) {
+        BigDecimal minPrice = query.getMinPrice();
+        BigDecimal maxPrice = query.getMaxPrice();
+
+        if (minPrice == null || maxPrice == null || minPrice.compareTo(maxPrice) > 0) {
+            throw new IllegalArgumentException("Invalid price range");
+        }
+
+        return tourPackageRepository.findByPriceBetween(minPrice, maxPrice);
+    }
+
     @Override
     public TourPackage handle(GetTourPackageByIdQuery query) {
         return tourPackageRepository.findById(query.tourPackageId())
