@@ -25,7 +25,17 @@ public class TouristCommandServiceImpl implements TouristCommandService {
 
     @Override
     public Tourist handle(UpdateTouristInfoCommand command) {
-        return null;
+        Tourist tourist = validationUtil.findTouristById(1L);
+        TouristRequestDto requestDto = command.touristRequestDto();
+
+        tourist.setName(requestDto.getName());
+        tourist.setBirthDate(requestDto.getBirthDate());
+        tourist.setPhoneNumber(requestDto.getPhoneNumber());
+        tourist.setPhotoUrl(requestDto.getPhotoUrl());
+        tourist.setEmergencyPhoneNumber(requestDto.getEmergencyPhoneNumber());
+
+        touristRepository.save(tourist);
+        return tourist;
     }
 
     @Override
