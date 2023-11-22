@@ -4,6 +4,7 @@ import com.nexusnova.lifetravelapi.app.IAM.profile.domain.repositories.AgencyRep
 import com.nexusnova.lifetravelapi.app.core.tours.application.TourPackageQueryServiceImpl;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.model.TourPackage;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByPriceQuery;
+import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByRegionQuery;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.repositories.TourPackageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,5 +86,78 @@ class TourPackageQueryServiceTest {
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> tourPackageQueryService.handle(query));
+    }
+
+    @Test
+    void handle_WhenValidRegionId_ExpectFilteredTourPackages() {
+        // Arrange
+        Long regionId = 123L;
+        GetTourPackagesByRegionQuery query = new GetTourPackagesByRegionQuery(regionId);
+        TourPackage tourPackage1 = new TourPackage();
+        TourPackage tourPackage2 = new TourPackage();
+        List<TourPackage> expectedTourPackages = Arrays.asList(tourPackage1, tourPackage2);
+
+        when(tourPackageRepository.findByRegionId(regionId)).thenReturn(expectedTourPackages);
+
+        // Act
+        List<TourPackage> result = tourPackageQueryService.handle(query);
+
+        // Assert
+        assertEquals(expectedTourPackages, result);
+    }
+
+    @Test
+    void handle_WhenNullRegionId_ExpectEmptyList() {
+        // Arrange
+        GetTourPackagesByRegionQuery query = new GetTourPackagesByRegionQuery(null);
+
+        // Act
+        List<TourPackage> result = tourPackageQueryService.handle(query);
+
+        // Assert
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void handle_WhenNoMatchingTourPackages_ExpectEmptyList() {
+        // Arrange
+        Long regionId = 456L;
+        GetTourPackagesByRegionQuery query = new GetTourPackagesByRegionQuery(regionId);
+
+        when(tourPackageRepository.findByRegionId(regionId)).thenReturn(List.of());
+
+        // Act
+        List<TourPackage> result = tourPackageQueryService.handle(query);
+
+        // Assert
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void handle_WhenEmptyTourPackageList_ExpectEmptyList() {
+        // Arrange
+        Long regionId = 789L;
+        GetTourPackagesByRegionQuery query = new GetTourPackagesByRegionQuery(regionId);
+
+        when(tourPackageRepository.findByRegionId(regionId)).thenReturn(Arrays.asList());
+
+        // Act
+        List<TourPackage> result = tourPackageQueryService.handle(query);
+
+        // Assert
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void handle_WhenWhitespaceRegionId_ExpectEmptyList() {
+        // Arrange
+        Long regionId = 0L; // Assuming 0 is an invalid regionId
+        GetTourPackagesByRegionQuery query = new GetTourPackagesByRegionQuery(regionId);
+
+        // Act
+        List<TourPackage> result = tourPackageQueryService.handle(query);
+
+        // Assert
+        assertTrue(result.isEmpty());
     }
 }
