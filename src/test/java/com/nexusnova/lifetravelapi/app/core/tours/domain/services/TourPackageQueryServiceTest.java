@@ -3,15 +3,18 @@ package com.nexusnova.lifetravelapi.app.core.tours.domain.services;
 import com.nexusnova.lifetravelapi.app.IAM.profile.domain.repositories.AgencyRepository;
 import com.nexusnova.lifetravelapi.app.core.tours.application.TourPackageQueryServiceImpl;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.model.TourPackage;
+import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackageByIdQuery;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByPriceQuery;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.queries.GetTourPackagesByRegionQuery;
 import com.nexusnova.lifetravelapi.app.core.tours.domain.repositories.TourPackageRepository;
+import com.nexusnova.lifetravelapi.configuration.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -159,5 +162,62 @@ class TourPackageQueryServiceTest {
 
         // Assert
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void handle_WhenValidTourPackageId_ExpectTourPackage() {
+        // Arrange
+        Long tourPackageId = 1L;
+        GetTourPackageByIdQuery query = new GetTourPackageByIdQuery(tourPackageId);
+        TourPackage expectedTourPackage = new TourPackage(/* provide necessary parameters */);
+
+        when(tourPackageRepository.findById(tourPackageId)).thenReturn(Optional.of(expectedTourPackage));
+
+        // Act
+        TourPackage result = tourPackageQueryService.handle(query);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(expectedTourPackage, result);
+    }
+
+    @Test
+    void handle_WhenInvalidTourPackageId_ExpectResourceNotFoundException() {
+        // Arrange
+        Long tourPackageId = 999L;
+        GetTourPackageByIdQuery query = new GetTourPackageByIdQuery(tourPackageId);
+
+        when(tourPackageRepository.findById(tourPackageId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> tourPackageQueryService.handle(query));
+    }
+
+    @Test
+    void handle_WhenNullTourPackageId_ExpectResourceNotFoundException() {
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> tourPackageQueryService.handle(new GetTourPackageByIdQuery(null)));
+    }
+
+    @Test
+    void handle_WhenNegativeTourPackageId_ExpectResourceNotFoundException() {
+        // Arrange
+        Long tourPackageId = -1L;
+        GetTourPackageByIdQuery query = new GetTourPackageByIdQuery(tourPackageId);
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> tourPackageQueryService.handle(query));
+    }
+
+    @Test
+    void handle_WhenExceptionThrownByRepository_ExpectRuntimeException() {
+        // Arrange
+        Long tourPackageId = 1L;
+        GetTourPackageByIdQuery query = new GetTourPackageByIdQuery(tourPackageId);
+
+        when(tourPackageRepository.findById(tourPackageId)).thenThrow(new RuntimeException("Repository error"));
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> tourPackageQueryService.handle(query));
     }
 }
