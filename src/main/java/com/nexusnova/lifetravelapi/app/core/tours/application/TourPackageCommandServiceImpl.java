@@ -39,6 +39,9 @@ public class TourPackageCommandServiceImpl implements TourPackageCommandService 
 
     @Override
     public TourPackage handle(RegisterPackageCommand command) {
+        if (command == null || command.tourPackageRequestDto() == null) {
+            throw new IllegalArgumentException("Invalid command");
+        }
         TourPackage tourPackage = new TourPackage();
         return setTourPackage(tourPackage, command.tourPackageRequestDto());
     }
