@@ -1,21 +1,24 @@
 package com.nexusnova.lifetravelapi.app.IAM.identity.service;
 
 import com.nexusnova.lifetravelapi.app.IAM.identity.application.UserCommandServiceImpl;
+import com.nexusnova.lifetravelapi.app.IAM.identity.domain.commands.DeleteUserCommand;
 import com.nexusnova.lifetravelapi.app.IAM.identity.domain.commands.RegisterUserTouristCommand;
 import com.nexusnova.lifetravelapi.app.IAM.identity.domain.model.Role;
+import com.nexusnova.lifetravelapi.app.IAM.identity.domain.model.User;
 import com.nexusnova.lifetravelapi.app.IAM.identity.domain.repositories.UserRepository;
 import com.nexusnova.lifetravelapi.app.IAM.identity.resources.requests.UserRequestDto;
 import com.nexusnova.lifetravelapi.app.shared.ValidationUtil;
+import com.nexusnova.lifetravelapi.configuration.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class UserCommandServiceTest {
 
     private UserCommandService registerUserTouristCommandService;
+    private UserCommandService deleteUserCommandService;
     private UserRepository userRepository;
     private ValidationUtil validationUtil;
 
@@ -24,6 +27,7 @@ class UserCommandServiceTest {
         userRepository = mock(UserRepository.class);
         validationUtil = mock(ValidationUtil.class);
         registerUserTouristCommandService = new UserCommandServiceImpl(userRepository, validationUtil);
+        deleteUserCommandService = new UserCommandServiceImpl(userRepository, validationUtil);
     }
 
     @Test
@@ -59,5 +63,74 @@ class UserCommandServiceTest {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> registerUserTouristCommandService.handle(command));
+    }
+
+    @Test
+    void handle_WhenValidDeleteUserCommand_ExpectDeletedUser() {
+        // Arrange
+        DeleteUserCommand command = new DeleteUserCommand(1L);
+        User existingUser = new User();
+
+        when(validationUtil.findUserById(command.userId())).thenReturn(existingUser);
+
+        // Act
+        User result = deleteUserCommandService.handle(command);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(existingUser, result);
+        verify(userRepository, times(1)).delete(existingUser);
+    }
+
+    @Test
+    void handle_WhenNullDeleteUserCommand_ExpectNullPointerException() {
+        // Act & Assert
+        assertThrows(NullPointerException.class, () -> deleteUserCommandService.handle((RegisterUserTouristCommand) null));
+    }
+
+    @Test
+    void handle_WhenDeleteFails_ExpectRuntimeException() {
+        // Arrange
+        DeleteUserCommand command = new DeleteUserCommand(1L);
+        User existingUser = new User();
+
+        when(validationUtil.findUserById(command.userId())).thenReturn(existingUser);
+        doThrow(new RuntimeException("Delete failed")).when(userRepository).delete(existingUser);
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> deleteUserCommandService.handle(command));
+    }
+
+    @Test
+    void handle_WhenNullUserId_ExpectNullPointerException() {
+        // Arrange
+        DeleteUserCommand command = new DeleteUserCommand(null);
+
+        // Act & Assert
+        assertThrows(NullPointerException.class, () -> deleteUserCommandService.handle(command));
+    }
+
+    @Test
+    void handle_WhenNullUser_ExpectResourceNotFoundException() {
+        // Arrange
+        DeleteUserCommand command = new DeleteUserCommand(1L);
+
+        when(validationUtil.findUserById(command.userId())).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> deleteUserCommandService.handle(command));
+    }
+
+    @Test
+    void handle_WhenDeleteFails_ExpectRuntimeExceptionOfSec() {
+        // Arrange
+        DeleteUserCommand command = new DeleteUserCommand(2L);
+        User existingUser = new User();
+
+        when(validationUtil.findUserById(command.userId())).thenReturn(existingUser);
+        doThrow(new RuntimeException("Delete failed")).when(userRepository).delete(existingUser);
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> deleteUserCommandService.handle(command));
     }
 }
