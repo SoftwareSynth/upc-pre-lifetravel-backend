@@ -1,5 +1,6 @@
 package com.nexusnova.lifetravelapi.app.IAM.identity.application;
 
+import com.nexusnova.lifetravelapi.app.IAM.identity.domain.commands.AuthenticateUserCommand;
 import com.nexusnova.lifetravelapi.app.IAM.identity.domain.commands.DeleteUserCommand;
 import com.nexusnova.lifetravelapi.app.IAM.identity.domain.commands.RegisterUserAgencyCommand;
 import com.nexusnova.lifetravelapi.app.IAM.identity.domain.commands.RegisterUserTouristCommand;
@@ -43,6 +44,17 @@ public class UserCommandServiceImpl implements UserCommandService {
         Role role = validationUtil.getAgencyRole();
 
         return getUser(user, role, registerUserCommand.userRequestDto());
+    }
+    @Override
+    public User handle(AuthenticateUserCommand authenticateUserCommand) {
+        if (authenticateUserCommand.email() == null || authenticateUserCommand.password() == null) {
+            throw new IllegalArgumentException("Invalid command");
+        }
+        User user = validationUtil.findUserById(authenticateUserCommand.userId());
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
+        return user;
     }
 
     @Override
